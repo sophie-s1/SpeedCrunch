@@ -133,6 +133,7 @@ void MainWindow::createActions()
     m_actions.viewFullScreenMode = new QAction(this);
     m_actions.viewFunctions = new QAction(this);
     m_actions.viewHistory = new QAction(this);
+    m_actions.viewMenu = new QAction(this);
     m_actions.viewKeypad = new QAction(this);
     m_actions.viewFormulaBook = new QAction(this);
     m_actions.viewStatusBar = new QAction(this);
@@ -235,6 +236,7 @@ void MainWindow::createActions()
     m_actions.viewFullScreenMode->setCheckable(true);
     m_actions.viewFunctions->setCheckable(true);
     m_actions.viewHistory->setCheckable(true);
+    m_actions.viewMenu->setCheckable(true);
     m_actions.viewKeypad->setCheckable(true);
     m_actions.viewFormulaBook->setCheckable(true);
     m_actions.viewStatusBar->setCheckable(true);
@@ -323,6 +325,7 @@ void MainWindow::setActionsText()
     m_actions.viewFullScreenMode->setText(MainWindow::tr("F&ull Screen Mode"));
     m_actions.viewFunctions->setText(MainWindow::tr("&Functions"));
     m_actions.viewHistory->setText(MainWindow::tr("&History"));
+    m_actions.viewMenu->setText(MainWindow::tr("&Menu"));
     m_actions.viewKeypad->setText(MainWindow::tr("&Keypad"));
     m_actions.viewFormulaBook->setText(MainWindow::tr("Formula &Book"));
     m_actions.viewStatusBar->setText(MainWindow::tr("&Status Bar"));
@@ -447,6 +450,7 @@ void MainWindow::createActionShortcuts()
     m_actions.viewFullScreenMode->setShortcut(Qt::Key_F11);
     m_actions.viewFunctions->setShortcut(Qt::CTRL | Qt::Key_3);
     m_actions.viewHistory->setShortcut(Qt::CTRL | Qt::Key_7);
+    m_actions.viewMenu->setShortcut(Qt::CTRL | Qt::Key_M);
     m_actions.viewKeypad->setShortcut(Qt::CTRL | Qt::Key_K);
     m_actions.viewFormulaBook->setShortcut(Qt::CTRL | Qt::Key_1);
     m_actions.viewStatusBar->setShortcut(Qt::CTRL | Qt::Key_B);
@@ -492,6 +496,7 @@ void MainWindow::createMenus()
 
     m_menus.view = new QMenu("", this);
     menuBar()->addMenu(m_menus.view);
+    m_menus.view->addAction(m_actions.viewMenu);
     m_menus.view->addAction(m_actions.viewKeypad);
     m_menus.view->addSeparator();
     m_menus.view->addAction(m_actions.viewFormulaBook);
@@ -596,6 +601,8 @@ void MainWindow::createMenus()
     m_menus.help->addAction(m_actions.helpAbout);
 
     addActions(menuBar()->actions());
+
+    menuBar()->setVisible(m_settings->menuVisible);
 }
 
 void MainWindow::setMenusText()
@@ -852,6 +859,7 @@ void MainWindow::createFixedConnections()
     connect(m_actions.editWrapSelection, SIGNAL(triggered()), SLOT(wrapSelection()));
 
     connect(m_actions.viewFullScreenMode, SIGNAL(toggled(bool)), SLOT(setFullScreenEnabled(bool)));
+    connect(m_actions.viewMenu, SIGNAL(toggled(bool)), SLOT(setMenuVisible(bool)));
     connect(m_actions.viewKeypad, SIGNAL(toggled(bool)), SLOT(setKeypadVisible(bool)));
     connect(m_actions.viewStatusBar, SIGNAL(toggled(bool)), SLOT(setStatusBarVisible(bool)));
     connect(m_actions.viewBitfield, SIGNAL(toggled(bool)), SLOT(setBitfieldVisible(bool)));
@@ -989,6 +997,7 @@ void MainWindow::applySettings()
     m_actions.viewUserFunctions->setChecked(m_settings->userFunctionsDockVisible);
 
     m_actions.viewBitfield->setChecked(m_settings->bitfieldVisible);
+    m_actions.viewMenu->setChecked(m_settings->menuVisible);
     m_actions.viewKeypad->setChecked(m_settings->keypadVisible);
     m_actions.viewStatusBar->setChecked(m_settings->statusBarVisible);
 
@@ -1713,6 +1722,12 @@ void MainWindow::showFontDialog()
         return;
     m_widgets.display->setFont(f);
     m_widgets.editor->setFont(f);
+}
+
+void MainWindow::setMenuVisible(bool b)
+{
+    menuBar()->setVisible(b);
+    m_settings->menuVisible = b;
 }
 
 void MainWindow::setStatusBarVisible(bool b)
