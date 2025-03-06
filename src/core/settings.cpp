@@ -193,6 +193,7 @@ void Settings::load()
     key = KEY + QLatin1String("/Layout/");
     windowOnfullScreen = settings->value(key + QLatin1String("WindowOnFullScreen"), false).toBool();
     historyDockVisible = settings->value(key + QLatin1String("HistoryDockVisible"), false).toBool();
+    menuVisible = settings->value(key + QLatin1String("MenuVisible"), true).toBool();
     keypadVisible = settings->value(key + QLatin1String("KeypadVisible"), false).toBool();
     statusBarVisible = settings->value(key + QLatin1String("StatusBarVisible"), false).toBool();
     functionsDockVisible = settings->value(key + QLatin1String("FunctionsDockVisible"), false).toBool();
@@ -256,6 +257,7 @@ void Settings::save()
     settings->setValue(key + QLatin1String("FunctionsDockVisible"), functionsDockVisible);
     settings->setValue(key + QLatin1String("HistoryDockVisible"), historyDockVisible);
     settings->setValue(key + QLatin1String("WindowOnFullScreen"), windowOnfullScreen);
+    settings->setValue(key + QLatin1String("MenuVisible"), menuVisible);
     settings->setValue(key + QLatin1String("KeypadVisible"), keypadVisible);
     settings->setValue(key + QLatin1String("StatusBarVisible"), statusBarVisible);
     settings->setValue(key + QLatin1String("VariablesDockVisible"), variablesDockVisible);
