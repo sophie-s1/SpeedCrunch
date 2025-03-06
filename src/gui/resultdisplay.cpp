@@ -77,6 +77,7 @@ void ResultDisplay::rehighlight()
 {
     m_highlighter->update();
     updateScrollBarStyleSheet();
+    setStyleSheet("background: " + m_highlighter->colorForRole(ColorScheme::Background).name());
 }
 
 
