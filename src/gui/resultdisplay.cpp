@@ -286,7 +286,7 @@ void ResultDisplay::updateScrollBarStyleSheet()
         "   border: 0;"
         "   margin: 0 0 0 0;"
         "   background: %1;"
-        "   width: 5px;"
+        "   width: 10px;"
         "}"
         "QScrollBar::handle:vertical {"
         "   background: %2;"
