@@ -195,7 +195,7 @@ void Settings::load()
     historyDockVisible = settings->value(key + QLatin1String("HistoryDockVisible"), false).toBool();
     menuVisible = settings->value(key + QLatin1String("MenuVisible"), true).toBool();
     keypadVisible = settings->value(key + QLatin1String("KeypadVisible"), false).toBool();
-    statusBarVisible = settings->value(key + QLatin1String("StatusBarVisible"), false).toBool();
+    statusBarVisible = settings->value(key + QLatin1String("StatusBarVisible"), true).toBool();
     functionsDockVisible = settings->value(key + QLatin1String("FunctionsDockVisible"), false).toBool();
     variablesDockVisible = settings->value(key + QLatin1String("VariablesDockVisible"), false).toBool();
     userFunctionsDockVisible = settings->value(key + QLatin1String("UserFunctionsDockVisible"), false).toBool();
