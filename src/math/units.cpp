@@ -52,7 +52,9 @@ void Units::pushUnit(Quantity q, QString name)
 {
     q.cleanDimension();
     Unit u(name, q);
+#ifndef __EMSCRIPTEN__ // XXX FIXME: Qt/WASM (6.8.2 + 3.1.56) cannot handle this complex data type
     m_matchLookup.insert(q.getDimension(), u);
+#endif
 }
 
 unsigned int qHash(QMap<QString, Rational> dimension)
@@ -115,10 +117,13 @@ void Units::findUnit(Quantity& q)
         initTable();
 
     // Match derived units.
+#ifndef __EMSCRIPTEN__ // XXX FIXME: Qt/WASM (6.8.2 + 3.1.56) cannot handle this complex data type
     if (m_matchLookup.contains(q.getDimension())) {
         Unit temp(m_matchLookup[q.getDimension()]);
         q.setDisplayUnit(temp.value.numericValue(), temp.name);
-    } else {
+    } else
+#endif
+    {
         // Autogenerate unit name (product of base units).
         auto dimension = q.getDimension();
         auto i = dimension.constBegin();
