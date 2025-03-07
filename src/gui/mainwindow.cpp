@@ -639,10 +639,16 @@ void MainWindow::createStatusBar()
     m_status.angleUnit->setFlat(true);
     m_status.resultFormat->setFlat(true);
 
+#if 1 // XXX FIXME: Qt/WASM (6.8.2 + 3.1.56) cannot deal with Qt::ActionsContextMenu from the status widget
+    m_status.angleUnit->setContextMenuPolicy(Qt::CustomContextMenu);
+    connect(m_status.angleUnit, SIGNAL(customContextMenuRequested(const QPoint&)),
+        SLOT(showAngleContextMenu(const QPoint&)));
+#else
     m_status.angleUnit->setContextMenuPolicy(Qt::ActionsContextMenu);
     m_status.angleUnit->addAction(m_actions.settingsAngleUnitDegree);
     m_status.angleUnit->addAction(m_actions.settingsAngleUnitRadian);
     m_status.angleUnit->addAction(m_actions.settingsAngleUnitGradian);
+#endif
 
     m_status.resultFormat->setContextMenuPolicy(Qt::CustomContextMenu);
     connect(m_status.resultFormat, SIGNAL(customContextMenuRequested(const QPoint&)),
@@ -1679,7 +1685,7 @@ void MainWindow::exportHtml()
 
 void MainWindow::exportPlainText()
 {
-    QString fname = QFileDialog::getSaveFileName(this, tr("Export session as plain text"),                                                 
+    QString fname = QFileDialog::getSaveFileName(this, tr("Export session as plain text"),
                             documentsLocation(), tr("Text file (*.txt);;Any file (*.*)"));
 
     if (fname.isEmpty())
@@ -2442,6 +2448,11 @@ void MainWindow::showLanguageChooserDialog()
             emit languageChanged();
         }
     }
+}
+
+void MainWindow::showAngleContextMenu(const QPoint& point)
+{
+    m_menus.angleUnit->popup(m_status.angleUnit->mapToGlobal(point));
 }
 
 void MainWindow::showResultFormatContextMenu(const QPoint& point)

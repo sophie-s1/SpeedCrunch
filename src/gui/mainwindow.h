@@ -178,6 +178,7 @@ private slots:
     void showManualWindow();
     void showContextHelp();
     void showReadyMessage();
+    void showAngleContextMenu(const QPoint&);
     void showResultFormatContextMenu(const QPoint&);
     void showSessionImportDialog();
     void showSessionLoadDialog();
