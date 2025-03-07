@@ -1266,9 +1266,9 @@ MainWindow::~MainWindow()
 
 void MainWindow::showAboutDialog()
 {
-    AboutBox dialog(this);
+    static AboutBox dialog(this);
     dialog.resize(480, 640);
-    dialog.exec();
+    dialog.show();
 }
 
 void MainWindow::clearHistory()
