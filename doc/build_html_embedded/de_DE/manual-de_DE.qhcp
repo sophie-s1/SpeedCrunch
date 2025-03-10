@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <QHelpCollectionProject version="1.0">
     <assistant>
-        <title>SpeedCrunch 0.12 Dokumentation</title>
-        <homePage>qthelp://org.sphinx.manualdede.0.12/doc/contents.html</homePage>
-        <startPage>qthelp://org.sphinx.manualdede.0.12/doc/index.html</startPage>
+        <title>SpeedCrunch 0.12.1 Dokumentation</title>
+        <homePage>qthelp://org.sphinx.manual-dede.0.12.1/doc/contents.html</homePage>
+        <startPage>qthelp://org.sphinx.manual-dede.0.12.1/doc/index.html</startPage>
     </assistant>
     <docFiles>
         <generate>
