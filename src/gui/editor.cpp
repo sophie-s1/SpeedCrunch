@@ -548,8 +548,11 @@ void Editor::autoCalc()
         return;
 
     const auto str = m_evaluator->autoFix(text());
-    if (str.isEmpty())
+    if (str.isEmpty()) // If there is nothing to show, clear the autocalc text
+    {
+        emit autoCalcDisabled();
         return;
+    }
 
     // Same reason as above, do not update "ans".
     m_evaluator->setExpression(str);
