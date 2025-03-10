@@ -27,7 +27,7 @@
 #include <QtHelp/QHelpEngineCore>
 #include <QDesktopServices>
 #include <QIcon>
-
+#include <QTimer>
 
 ManualWindow::ManualWindow(QWidget* parent)
     : QTextBrowser(parent), m_scrollUpdated(false)
@@ -51,6 +51,10 @@ ManualWindow::ManualWindow(QWidget* parent)
         openPage(homePage);
     }
     retranslateText();
+
+#ifdef __EMSCRIPTEN__ // When running within a browser (WASM), start normalized (by default, WASM windows are maximized)
+    QTimer::singleShot(0, [=](){ showNormal(); });
+#endif
 }
 
 void ManualWindow::openPage(const QUrl& url)

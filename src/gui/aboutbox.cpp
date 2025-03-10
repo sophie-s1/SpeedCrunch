@@ -41,6 +41,10 @@ AboutBox::AboutBox(QWidget* parent, Qt::WindowFlags f)
     msg += " (Portable Edition)";
 #endif
     msg += "</b><br>(Qt " + QLatin1String(QT_VERSION_STR) + ")<br>";
+#ifdef __EMSCRIPTEN__
+    const QString wasm = "<br><b>%1</b><br>%2";
+    msg += wasm.arg(tr("WebAssembly port"), "Goran Devic");
+#endif
 
     const QString authors = "<p><b>%1</b><br>%2";
     msg += authors.arg(tr("Maintainer"), "Helder Correia");

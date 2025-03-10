@@ -472,6 +472,7 @@ void MainWindow::createActionShortcuts()
 
 void MainWindow::createMenus()
 {
+#ifndef __EMSCRIPTEN__
     m_menus.session = new QMenu("", this);
     menuBar()->addMenu(m_menus.session);
     m_menus.session->addAction(m_actions.sessionLoad);
@@ -483,7 +484,7 @@ void MainWindow::createMenus()
     m_menus.sessionExport->addAction(m_actions.sessionExportHtml);
     m_menus.session->addSeparator();
     m_menus.session->addAction(m_actions.sessionQuit);
-
+#endif
     m_menus.edit = new QMenu("", this);
     menuBar()->addMenu(m_menus.edit);
     m_menus.edit->addAction(m_actions.editCopy);
@@ -558,9 +559,11 @@ void MainWindow::createMenus()
     m_menus.angleUnit->addAction(m_actions.settingsAngleUnitCycle);
 
     m_menus.behavior = m_menus.settings->addMenu("");
+#ifndef __EMSCRIPTEN__
     m_menus.behavior->addAction(m_actions.settingsBehaviorSaveSessionOnExit);
     m_menus.behavior->addAction(m_actions.settingsBehaviorSaveWindowPositionOnExit);
     m_menus.behavior->addSeparator();
+#endif
     m_menus.behavior->addAction(m_actions.settingsBehaviorPartialResults);
     m_menus.behavior->addAction(m_actions.settingsBehaviorAutoAns);
     m_menus.behavior->addAction(m_actions.settingsBehaviorAutoCompletion);
@@ -574,19 +577,25 @@ void MainWindow::createMenus()
 
     m_menus.behavior->addAction(m_actions.settingsBehaviorLeaveLastExpression);
     m_menus.behavior->addAction(m_actions.settingsBehaviorComplexNumbers);
+#ifndef __EMSCRIPTEN__
     m_menus.behavior->addSeparator();
     m_menus.behavior->addAction(m_actions.settingsBehaviorAlwaysOnTop);
+#endif
     m_menus.behavior->addAction(m_actions.settingsBehaviorAutoResultToClipboard);
 
+#ifndef __EMSCRIPTEN__ // WASM: Exclude "Font..."
     m_menus.display = m_menus.settings->addMenu("");
     m_menus.colorScheme = m_menus.display->addMenu("");
+#else
+    m_menus.colorScheme = m_menus.settings->addMenu("");
+#endif
     const auto schemes = m_actions.settingsDisplayColorSchemes; // TODO: Qt 5.7's qAsConst().
     for (auto& action : schemes)
         m_menus.colorScheme->addAction(action);
     m_menus.display->addAction(m_actions.settingsDisplayFont);
-
+#ifndef __EMSCRIPTEN__
     m_menus.settings->addAction(m_actions.settingsLanguage);
-
+#endif
     m_menus.help = new QMenu("", this);
     menuBar()->addMenu(m_menus.help);
     m_menus.help->addAction(m_actions.helpManual);
@@ -1245,6 +1254,11 @@ MainWindow::MainWindow()
 
     m_manualServer = ManualServer::instance();
     connect(this, SIGNAL(languageChanged()), m_manualServer, SLOT(ensureCorrectLanguage()));
+
+#ifdef __EMSCRIPTEN__ // When running within a browser (WASM), start normalized (by default, WASM apps are maximized) and disable app close button ('X')
+    setWindowFlags(Qt::Window | Qt::WindowMinimizeButtonHint | Qt::WindowMaximizeButtonHint);
+    QTimer::singleShot(0, [=](){ showNormal(); });
+#endif
 }
 
 MainWindow::~MainWindow()
@@ -1266,9 +1280,15 @@ MainWindow::~MainWindow()
 
 void MainWindow::showAboutDialog()
 {
+#ifdef __EMSCRIPTEN__ // XXX FIXME: WASM hangs on the AboutBox exec() method
     static AboutBox dialog(this);
     dialog.resize(480, 640);
     dialog.show();
+#else
+    AboutBox dialog(this);
+    dialog.resize(480, 640);
+    dialog.exec();
+#endif
 }
 
 void MainWindow::clearHistory()
