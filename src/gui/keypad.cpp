@@ -82,7 +82,7 @@ Keypad::Keypad(QWidget* parent)
     setButtonTooltips();
     disableButtonFocus();
     setLayoutDirection(Qt::LeftToRight);
-    connect(&mapper, SIGNAL(mapped(int)), SLOT(emitButtonPressed(int)));
+    connect(&mapper, SIGNAL(mappedInt(int)), SLOT(emitButtonPressed(int)));
 }
 
 void Keypad::handleRadixCharacterChange()
