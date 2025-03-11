@@ -163,6 +163,7 @@ private slots:
     void setResultPrecisionAutomatic();
     void setResultPrecision(int);
     void setMenuVisible(bool);
+    void setStateLabelPosition();
     void setStatusBarVisible(bool);
     void setSyntaxHighlightingEnabled(bool);
     void setDigitGrouping(QAction*);
@@ -188,6 +189,7 @@ private slots:
 protected:
     virtual void closeEvent(QCloseEvent*);
     virtual bool eventFilter(QObject*, QEvent*);
+    virtual void resizeEvent(QResizeEvent*);
 
 private:
     Q_DISABLE_COPY(MainWindow)

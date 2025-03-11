@@ -1810,15 +1810,20 @@ void MainWindow::setStatusBarVisible(bool b)
     m_settings->statusBarVisible = b;
 }
 
+void MainWindow::setStateLabelPosition()
+{
+    const int height = m_widgets.state->height();
+    QPoint pos = mapFromGlobal(m_widgets.editor->mapToGlobal(QPoint(0, -height)));
+    m_widgets.state->move(pos);
+}
+
 void MainWindow::showStateLabel(const QString& msg)
 {
     m_widgets.state->setText(msg);
     m_widgets.state->adjustSize();
     m_widgets.state->show();
     m_widgets.state->raise();
-    const int height = m_widgets.state->height();
-    QPoint pos = mapFromGlobal(m_widgets.editor->mapToGlobal(QPoint(0, -height)));
-    m_widgets.state->move(pos);
+    setStateLabelPosition();
 }
 
 void MainWindow::handleAutoCalcMessageAvailable(const QString& message)
@@ -1889,6 +1894,11 @@ bool MainWindow::eventFilter(QObject* o, QEvent* e)
     }
 
     return QMainWindow::eventFilter(o, e);
+}
+
+void MainWindow::resizeEvent(QResizeEvent*)
+{
+    setStateLabelPosition();
 }
 
 void MainWindow::deleteKeypad()
