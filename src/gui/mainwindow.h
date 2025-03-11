@@ -105,6 +105,7 @@ private slots:
     void handleManualClosed();
     void handleDockWidgetVisibilityChanged(bool visible);
     void hideStateLabel();
+    void importSession(QTextStream &stream, bool ignoreAll);
     void increaseDisplayFontPointSize();
     void increaseOpacity();
     void insertConstantIntoEditor(const QString&);

@@ -47,6 +47,7 @@
 #include "gui/syntaxhighlighter.h"
 #include "math/floatconfig.h"
 
+#include <QBuffer>
 #include <QLatin1String>
 #include <QLocale>
 #include <QTextStream>
@@ -472,7 +473,6 @@ void MainWindow::createActionShortcuts()
 
 void MainWindow::createMenus()
 {
-#ifndef __EMSCRIPTEN__
     m_menus.session = new QMenu("", this);
     menuBar()->addMenu(m_menus.session);
     m_menus.session->addAction(m_actions.sessionLoad);
@@ -482,6 +482,7 @@ void MainWindow::createMenus()
     m_menus.sessionExport = m_menus.session->addMenu("");
     m_menus.sessionExport->addAction(m_actions.sessionExportPlainText);
     m_menus.sessionExport->addAction(m_actions.sessionExportHtml);
+#ifndef __EMSCRIPTEN__
     m_menus.session->addSeparator();
     m_menus.session->addAction(m_actions.sessionQuit);
 #endif
@@ -559,7 +560,7 @@ void MainWindow::createMenus()
     m_menus.angleUnit->addAction(m_actions.settingsAngleUnitCycle);
 
     m_menus.behavior = m_menus.settings->addMenu("");
-#ifndef __EMSCRIPTEN__
+#ifndef __EMSCRIPTEN__ // WebAssembly can not keep persistent state across runs
     m_menus.behavior->addAction(m_actions.settingsBehaviorSaveSessionOnExit);
     m_menus.behavior->addAction(m_actions.settingsBehaviorSaveWindowPositionOnExit);
     m_menus.behavior->addSeparator();
@@ -583,7 +584,7 @@ void MainWindow::createMenus()
 #endif
     m_menus.behavior->addAction(m_actions.settingsBehaviorAutoResultToClipboard);
 
-#ifndef __EMSCRIPTEN__ // WASM: Exclude "Font..."
+#ifndef __EMSCRIPTEN__ // WebAssembly has limited access to languages and fonts
     m_menus.display = m_menus.settings->addMenu("");
     m_menus.colorScheme = m_menus.display->addMenu("");
 #else
@@ -648,7 +649,7 @@ void MainWindow::createStatusBar()
     m_status.angleUnit->setFlat(true);
     m_status.resultFormat->setFlat(true);
 
-#if 1 // XXX FIXME: Qt/WASM (6.8.2 + 3.1.56) cannot deal with Qt::ActionsContextMenu from the status widget
+#if __EMSCRIPTEN__ // XXX FIXME: Qt/WASM (6.8.2 + 3.1.56) cannot deal with Qt::ActionsContextMenu from the status widget
     m_status.angleUnit->setContextMenuPolicy(Qt::CustomContextMenu);
     connect(m_status.angleUnit, SIGNAL(customContextMenuRequested(const QPoint&)),
         SLOT(showAngleContextMenu(const QPoint&)));
@@ -1043,7 +1044,6 @@ void MainWindow::applySettings()
     m_actions.settingsBehaviorLeaveLastExpression->setChecked(m_settings->leaveLastExpression);
     m_actions.settingsBehaviorSaveWindowPositionOnExit->setChecked(m_settings->windowPositionSave);
 
-
     checkInitialResultFormat();
     checkInitialResultPrecision();
     checkInitialComplexFormat();
@@ -1188,8 +1188,6 @@ void MainWindow::checkInitialDigitGrouping()
     }
 }
 
-
-
 void MainWindow::saveSettings()
 {
     m_settings->windowGeometry = m_settings->windowPositionSave ? saveGeometry() : QByteArray();
@@ -1208,7 +1206,6 @@ void MainWindow::saveSession(QString & fname)
         return;
     }
 
-
     QJsonObject json;
     m_session->serialize(json);
     QJsonDocument doc(json);
@@ -1220,7 +1217,6 @@ void MainWindow::saveSession(QString & fname)
 MainWindow::MainWindow()
     : QMainWindow()
 {
-
     m_session = new Session();
     m_constants = Constants::instance();
     m_evaluator = Evaluator::instance();
@@ -1417,6 +1413,21 @@ void MainWindow::hideStateLabel()
 
 void MainWindow::showSessionLoadDialog()
 {
+#ifdef __EMSCRIPTEN__ // Webassembly requires the use of specific Qt calls to access files outside the web sandbox
+    auto fileContentReady = [this](const QString &fileName, const QByteArray &data)
+    {
+        if (!fileName.isEmpty())
+        {
+            QJsonDocument doc(QJsonDocument::fromJson(data));
+            m_session->deSerialize(doc.object(), true); // Merge always
+
+            emit historyChanged();
+            emit variablesChanged();
+            emit functionsChanged();
+        }
+    };
+    QFileDialog::getOpenFileContent("SpeedCrunch Sessions (*.json);;All Files (*)",  fileContentReady);
+#else
     QString filters = tr("SpeedCrunch Sessions (*.json);;All Files (*)");
     QString fname = QFileDialog::getOpenFileName(this, tr("Load Session"), QString(), filters);
     if (fname.isEmpty())
@@ -1452,7 +1463,7 @@ void MainWindow::showSessionLoadDialog()
     emit historyChanged();
     emit variablesChanged();
     emit functionsChanged();
-
+#endif
 }
 
 void MainWindow::wrapSelection()
@@ -1462,6 +1473,13 @@ void MainWindow::wrapSelection()
 
 void MainWindow::saveSessionDialog()
 {
+#ifdef __EMSCRIPTEN__ // Webassembly requires the use of specific Qt calls to access files outside the web sandbox
+    QJsonObject json;
+    m_session->serialize(json);
+    QJsonDocument doc(json);
+    QByteArray jsonData = doc.toJson(QJsonDocument::Indented);
+    QFileDialog::saveFileContent(jsonData, "session.json");
+#else
     QString filters = tr("SpeedCrunch Sessions (*.json);;All Files (*)");
     QString fname = QFileDialog::getSaveFileName(this, tr("Save Session"), QString(), filters);
     if (fname.isEmpty())
@@ -1479,10 +1497,68 @@ void MainWindow::saveSessionDialog()
     file.write(doc.toJson());
 
     file.close();
+#endif
+}
+
+void MainWindow::importSession(QTextStream &stream, bool ignoreAll = false)
+{
+    QString exp = stream.readLine();
+    while (!exp.isNull()) {
+        m_widgets.editor->setText(exp);
+
+        QString str = m_evaluator->autoFix(exp);
+
+        m_evaluator->setExpression(str);
+
+        Quantity result = m_evaluator->evalUpdateAns();
+        if (!m_evaluator->error().isEmpty()) {
+            if (!ignoreAll) {
+                QMessageBox::StandardButton button =
+                    QMessageBox::warning(this, tr("Error"), tr("Ignore error?") + "\n" + m_evaluator->error(),
+                                         QMessageBox::Yes | QMessageBox::YesToAll
+                                             | QMessageBox::Cancel, QMessageBox::Yes);
+
+                if (button == QMessageBox::Cancel)
+                    return;
+                if (button == QMessageBox::YesToAll)
+                    ignoreAll = true;
+            }
+        } else {
+            m_session->addHistoryEntry(HistoryEntry(exp, result));
+            m_widgets.editor->setText(str);
+            m_widgets.editor->selectAll();
+            m_widgets.editor->stopAutoCalc();
+            m_widgets.editor->stopAutoComplete();
+            if(!result.isNan())
+                m_conditions.autoAns = true;
+        }
+        exp = stream.readLine();
+    }
+
+    emit historyChanged();
+    emit variablesChanged();
+    emit functionsChanged();
+
+    if (!isActiveWindow())
+        activateWindow();
 }
 
 void MainWindow::showSessionImportDialog()
 {
+#ifdef __EMSCRIPTEN__ // Webassembly requires the use of specific Qt calls to access files outside the web sandbox
+    auto fileContentReady = [this](const QString &fileName, const QByteArray &data)
+    {
+        if (!fileName.isEmpty())
+        {
+            QByteArray array = data;
+            QBuffer buffer(&array);
+            buffer.open(QBuffer::ReadOnly);
+            QTextStream stream(&buffer);
+            importSession(stream, true);
+        }
+    };
+    QFileDialog::getOpenFileContent("Import session (*.txt);;All Files (*)",  fileContentReady);
+#else
     QString filters = tr("All Files (*)");
     QString fname = QFileDialog::getOpenFileName(this, tr("Import Session"), QString(), filters);
     if (fname.isEmpty())
@@ -1513,48 +1589,8 @@ void MainWindow::showSessionImportDialog()
     }
 
     QTextStream stream(&file);
-    QString exp = stream.readLine();
-    bool ignoreAll = false;
-    while (!exp.isNull()) {
-        m_widgets.editor->setText(exp);
-
-        QString str = m_evaluator->autoFix(exp);
-
-        m_evaluator->setExpression(str);
-
-        Quantity result = m_evaluator->evalUpdateAns();
-        if (!m_evaluator->error().isEmpty()) {
-            if (!ignoreAll) {
-                QMessageBox::StandardButton button =
-                    QMessageBox::warning(this, tr("Error"), tr("Ignore error?") + "\n" + m_evaluator->error(),
-                        QMessageBox::Yes | QMessageBox::YesToAll
-                        | QMessageBox::Cancel, QMessageBox::Yes);
-
-                if (button == QMessageBox::Cancel)
-                    return;
-                if (button == QMessageBox::YesToAll)
-                    ignoreAll = true;
-            }
-        } else {
-            m_session->addHistoryEntry(HistoryEntry(exp, result));
-            m_widgets.editor->setText(str);
-            m_widgets.editor->selectAll();
-            m_widgets.editor->stopAutoCalc();
-            m_widgets.editor->stopAutoComplete();
-            if(!result.isNan())
-                m_conditions.autoAns = true;
-        }
-
-        exp = stream.readLine();
-    }
-
-    file.close();
-    emit historyChanged();
-    emit variablesChanged();
-    emit functionsChanged();
-
-    if (!isActiveWindow())
-        activateWindow();
+    importSession(stream);
+#endif
 }
 
 void MainWindow::setAlwaysOnTopEnabled(bool b)
@@ -1678,13 +1714,19 @@ void MainWindow::setAngleModeGradian()
     emit angleUnitChanged();
 }
 
+#ifndef __EMSCRIPTEN__ // Unused function for WebAssembly target
 inline static QString documentsLocation()
 {
     return QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation);
 }
+#endif
 
 void MainWindow::exportHtml()
 {
+#ifdef __EMSCRIPTEN__ // Webassembly requires the use of specific Qt calls to access files outside the web sandbox
+    QByteArray data = m_widgets.display->exportHtml().toUtf8();
+    QFileDialog::saveFileContent(data, "speedcrunch.html");
+#else
     QString fname = QFileDialog::getSaveFileName(this, tr("Export session as HTML"),
         documentsLocation(), tr("HTML file (*.html)"));
 
@@ -1701,10 +1743,15 @@ void MainWindow::exportHtml()
     stream << m_widgets.display->exportHtml();
 
     file.close();
+#endif
 }
 
 void MainWindow::exportPlainText()
 {
+#ifdef __EMSCRIPTEN__ // Webassembly requires the use of specific Qt calls to access files outside the web sandbox
+    QByteArray data = m_widgets.display->document()->toPlainText().toUtf8();
+    QFileDialog::saveFileContent(data, "speedcrunch.txt");
+#else
     QString fname = QFileDialog::getSaveFileName(this, tr("Export session as plain text"),
                             documentsLocation(), tr("Text file (*.txt);;Any file (*.*)"));
 
@@ -1724,6 +1771,7 @@ void MainWindow::exportPlainText()
 
     file.write(text);
     file.close();
+#endif
 }
 
 void MainWindow::setWidgetsDirection()
