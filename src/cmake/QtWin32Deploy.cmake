@@ -15,7 +15,7 @@ set(qtwin32_QMLPLUGIN_SUFFIX_DEBUG "plugin${qtwin32_DLL_SUFFIX_DEBUG}")
 
 # Determine the Qt minor version (so '6.4' or '6.5') for version checking. There's unlikely to be enough changes in
 # patch releases to make it worth distinguishing based on those.
-string(REGEX MATCH "[0-9]+[.][0-9]+" qtwin32_QT_MINOR_VERSION ${Qt6Core_VERSION_STRING})
+string(REGEX MATCH "[0-9]+[.][0-9]+" qtwin32_QT_MINOR_VERSION ${Qt6Core_VERSION})
 
 
 # qtwin32_check_qt_version([STRICT] <version>...)
